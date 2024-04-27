@@ -1,19 +1,37 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify, make_response, redirect
 from flask import jsonify, make_response
 
 
 app = Flask(__name__)
 
+#..............................................................................................................................#
+# Eror 404 not found
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('error/404.html'), 404
+
+@app.route("/error-403-access-denied")
+def access_denited():
+    return render_template('error/403.html')
+#..............................................................................................................................#
+
+#Users page
 @app.route("/")
-def about_page():
-    # check cookie
+def home():
     username = request.cookies.get('username')
-    password = request.cookies.get('password')
-    print('username:', username)
-    print('password:', password)
-    if username == 'admin' and password == 'admin':
-        return render_template('dashboard.html')
-    return render_template('login.html')
+    return render_template('user/home.html', username=username)
+
+# Admin page
+@app.route("/admin")
+def admin_page():
+    # Kiểm tra cookie
+    role = request.cookies.get('role')
+    if role == 'admin':
+        return render_template('admin/dashboard.html')
+    else:
+        return redirect("/error-403-access-denied")
+
+#..............................................................................................................................#
 
 
 # sign_out
@@ -40,7 +58,7 @@ def set_caution():
         return jsonify({'message': 'Method not allowed'})
 
 # login
-@app.route("/login_admin", methods=['POST'])
+@app.route("/login", methods=['POST'])
 def login_admin():
     if request.method == 'POST':
         data = request.json  # Lấy dữ liệu gửi từ frontend dưới dạng JSON
