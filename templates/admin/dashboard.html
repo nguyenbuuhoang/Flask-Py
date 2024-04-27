@@ -477,7 +477,7 @@
             }).then((result) => {
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
-                    fetch('/sign_out', {
+                    fetch('/logout', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
