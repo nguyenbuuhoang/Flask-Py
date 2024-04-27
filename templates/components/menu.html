@@ -1,0 +1,88 @@
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+        <a class="navbar-brand me-auto" href="#">
+            <img class="logo" src="{{ url_for('static', filename='image/floodwarning.ico') }}" alt="Flood Warning">
+            <p>Flask Flood</p>
+        </a>
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar"
+            aria-labelledby="offcanvasNavbarLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Flask Flood</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <ul class="navbar-nav justify-content-center flex-grow-1 pe-3">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">Giới thiệu</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        {% if username %}
+        <li class="username">
+            Hi {{ username }}
+            <ul class="submenu">
+                <li><a href="">Setting</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </li>
+        {% else %}
+        <a class="login-button" href="/login">Login</a>
+        {% endif %}
+        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar"
+            aria-controls="offcanvasNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</nav>
+<!-- Active link -->
+<script>
+    $(document).ready(function () {
+        var currentUrl = window.location.pathname;
+        $(".navbar-nav a").each(function () {
+            var href = $(this).attr("href");
+            if (href === currentUrl) {
+                $(this).addClass("active");
+            } else {
+                $(this).removeClass("active");
+            }
+        });
+        $(".submenu a").each(function () {
+            var href = $(this).attr("href");
+            if (href === currentUrl) {
+                $(this).addClass("active");
+                $(this).closest('.nav-item').find('.nav-link').addClass('active');
+            } else {
+                $(this).removeClass("active");
+            }
+        });
+    });
+
+    $(window).scroll(function () {
+        var scrollTop = $(window).scrollTop();
+        var navbar = $(".navbar");
+        if (scrollTop > 50) {
+            navbar.addClass("fixed");
+        } else {
+            navbar.removeClass("fixed");
+        }
+    });
+</script>
+
+<script>
+    function logout() {
+        $.ajax({
+            url: '/logout',
+            type: 'POST',
+            success: function(response) {
+                window.location.href = '/';
+            },
+            error: function(xhr, status, error) {
+                console.error('Đã có lỗi xảy ra khi đăng xuất:', error);
+            }
+        });
+    }
+</script>

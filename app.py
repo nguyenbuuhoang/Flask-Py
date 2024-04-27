@@ -49,7 +49,11 @@ def access_denited():
 def home():
     username = session.get('username')
     return render_template('user/home.html', username=username)
-
+#About page
+@app.route("/about")
+def about():
+    username = session.get('username')
+    return render_template('user/about.html', username=username)
 # Admin page
 @app.route("/admin")
 def admin_page():
