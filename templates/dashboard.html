@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>Raspberry Pi Control</title>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.4/raphael-min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/justgage/1.2.9/justgage.min.js"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <script src="https://code.iconify.design/2/2.1.2/iconify.min.js"></script>
+
+    <script src="https://bernii.github.io/gauge.js/dist/gauge.min.js"></script>
+
+    <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@600&display=swap" rel="stylesheet">
+
+
+    <script src="https://www.gstatic.com/firebasejs/4.3.0/firebase.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//code.jquery.com/ui/1.11.0/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.3/js/materialize.min.js"></script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.min.js"
+        type="text/javascript"></script>
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://code.jscharting.com/latest/jscharting.js"></script>
+
+
+</head>
+
+<style>
+    .roundElement {
+        border-radius: 20px;
+    }
+
+    .card-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+
+
+    * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+
+    /* input[type="range"] {
+        position: relative;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        display: block;
+        width: 80%;
+        height: 8px;
+        background-color: #d5d5d5;
+        border-radius: 8px;
+        outline: none;
+    } */
+
+    input[type="range"]::-webkit-slider-runnable-track {
+        -webkit-appearance: none;
+        height: 8px;
+    }
+
+    input[type="range"]::-moz-track {
+        -moz-appearance: none;
+        height: 8px;
+    }
+
+    input[type="range"]::-ms-track {
+        appearance: none;
+        height: 8px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 20px;
+        width: 20px;
+        background-color: #3264fe;
+        border-radius: 50%;
+        cursor: pointer;
+        margin-top: -6px;
+        border: none;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        -webkit-appearance: none;
+        height: 20px;
+        width: 20px;
+        background-color: #3264fe;
+        border-radius: 50%;
+        cursor: pointer;
+        margin-top: -6px;
+        border: none;
+    }
+
+    input[type="range"]::-ms-thumb {
+        appearance: none;
+        height: 20px;
+        width: 20px;
+        background-color: #3264fe;
+        border-radius: 50%;
+        cursor: pointer;
+        margin-top: -6px;
+        border: none;
+    }
+
+    input[type="range"]:active::-webkit-slider-thumb {
+        background-color: #ffffff;
+        border: 3px solid #3264fe;
+    }
+
+    #slider-value {
+        width: 13%;
+        position: relative;
+        background-color: #3264fe;
+        color: #ffffff;
+        text-align: center;
+        font-family: "Roboto Mono", monospace;
+        padding: 10px 0;
+        border-radius: 5px;
+    }
+</style>
+
+<body id="body-pd">
+
+    <header class="header" id="header">
+        <div class="header__toggle">
+            <i class='bx bx-menu' id="header-toggle"></i>
+        </div>
+
+        <div class="input-field col s12">
+            <h4>
+                Hệ Thống Dự Báo Lũ Lụt
+            </h4>
+        </div>
+
+
+        <div class="header__img ">
+        </div>
+    </header>
+
+
+
+    <div class="l-navbar_1 " id="nav-bar">
+        <div class="nav">
+            <div>
+                <a href="# " class="nav__logo ">
+                    <i class='bx bx-layer nav__logo-icon'></i>
+                    <span class="nav__logo-name ">Dự Báo Lũ</span>
+                </a>
+
+                <div id="menu" lass="nav__list ">
+                    <a id="menu_info_enviroment" class="nav__link active ">
+                        <i id="menu_info_enviroment" class='bx bx-grid-alt nav__icon'></i>
+                        <span id="menu_info_enviroment" class="nav__name ">Thông số cảm biến</span>
+                    </a>
+
+
+                    <!-- add sign out button -->
+
+
+                    <a id="menu_history" class="nav__link ">
+                        <i id="menu_history" class='bx bx-history nav__icon'></i>
+                        <span id="menu_history" class="nav__name ">Lịch sử</span>
+                    </a>
+
+                    <a id="menu_chart" class="nav__link ">
+                        <i id="menu_chart" class='bx bx-bar-chart-alt-2 nav__icon'></i>
+                        <span id="menu_chart" class="nav__name ">Biểu đồ</span>
+                    </a>
+
+                    <a id="menu_info" class="nav__link ">
+                        <i id="menu_info" class='bx bx-info-circle nav__icon'></i>
+                        <span id="menu_info" class="nav__name ">Thông tin</span>
+                    </a>
+
+                    <a id="menu_sign_out" class="nav__link ">
+                        <i id="menu_sign_out" class='bx bx-log-out nav__icon'></i>
+                        <span id="menu_sign_out" class="nav__name ">Đăng xuất</span>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <br>
+    <br>
+    <br>
+
+    <div class="container">
+        <!-- <div> -->
+        <div id="enviroment_id" style="display: none;">
+            <div class="row">
+
+                <div class="col s6 m3 ">
+                    <div class="card teal roundElement ">
+                        <div class="card-content white-text ">
+                            <span class="card-title" style="font-size: 14px;">Độ ẩm</span>
+                            <div class="center">
+                                <H3 id="sensor_humidity_id"> 99 % </H3>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="card teal roundElement">
+                        <div class="card-content white-text">
+                            <span class="card-title" style="font-size: 14px;">Nhiệt độ</span>
+                            <H3 class="center" id="sensor_temp_id">
+                                22 °C
+                            </H3>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col s6 m3">
+                    <div class="card teal roundElement">
+                        <div class="card-content white-text">
+                            <span class="card-title" style="font-size: 14px;">Web Độ ẩm</span>
+                            <H3 class="center" id="web_humidity_id">
+                                82
+                            </H3>
+                        </div>
+                    </div>
+
+                    <div class="card teal roundElement">
+                        <div class="card-content white-text">
+                            <span class="card-title" style="font-size: 14px;">Web Nhiệt độ</span>
+                            <H3 class="center" id="web_temp_id">
+                                82
+                            </H3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col s12 m6">
+
+                    <div class="card teal roundElement">
+                        <div class="card-content white-text">
+                            <span class="card-title" style="font-size: 14px;">Mực nước</span>
+                            <div class="center">
+                                <H3 id="water_level"> 10 Cm </H3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col s6 m3">
+
+                    <div class="card teal roundElement">
+                        <div class="card-content white-text">
+                            <span class="card-title" style="font-size: 14px;">Mực nước ngày mai</span>
+                            <div class="center">
+                                <H3 id="prediction_water_level_tomorrow"> 7 Cm </H3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="col s6 m3">
+
+                    <div class="card teal roundElement">
+                        <div class="card-content white-text">
+                            <span class="card-title" style="font-size: 14px;">Mực nước ngày mốt</span>
+                            <div class="center">
+                                <H3 id="prediction_water_level_after_tomorrow"> 7 Cm </H3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col s12 m12">
+
+                    <div class="card roundElement">
+                        <div class="card-content brown-text">
+                            <span class="card-title" style="font-size: 14px;">Ngưỡng cảnh báo</span>
+                            <div class="center">
+                                <input type="range" id="my-slider" min="0" max="100" value="50">
+                                <div id="slider-value" class="center">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="history_id" style="display: none;">
+            <div class="row ">
+                <div class="s12">
+                    <div class="input-field col s10">
+                        <input type="text" class="datepicker" id="datepicker_history">
+                        <label for="timepicker">Chọn ngày lấy dữ liệu</label>
+                    </div>
+                    <div class="col s2" style="margin-top: 20px;">
+                        <button class="btn waves-effect waves-light" id="get_history_btn" name="action">Xong
+                            <i class="material-icons right">send</i>
+                        </button>
+                    </div>
+                </div>
+
+
+                <div class="col s12 m12">
+                    <div class="card white roundElement" style=" height: 50%; max-height: 400px; overflow-y: scroll;">
+                        <div class="card-content black-text responsive-table">
+
+                            <span class="card-title center-align">
+                                <h4 id="name_history_table">Chọn ngày để xem dữ liệu đã lưu</h4>
+                            </span>
+                            <br>
+                            <table id="history_table_id" class="centered" style="overflow: hidden;">
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="chart_id" style="display: none;">
+            <div class="row ">
+                <div class="s12">
+                    <div class="input-field col s10">
+                        <input type="text" class="datepicker" id="datepicker_chart">
+                        <label for="timepicker">Chọn ngày lấy dữ liệu</label>
+                    </div>
+                    <div class="col s2" style="margin-top: 20px;">
+                        <button class="btn waves-effect waves-light" id="get_chart_btn" name="action">Xong
+                            <i class="material-icons right">send</i>
+                        </button>
+                    </div>
+                </div>
+
+
+                <div class="col s12 m12">
+                    <div class="row">
+                        <div class="col s12">
+                            <div class="card white roundElement">
+                                <div class="card-content black-text">
+                                    <span class="card-title">Dữ liệu</span>
+                                    <canvas id="main_chart" style="width:100%;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <div id="info_id" style="display: none;">
+            <div class=row>
+                <div class="col s12 m12 ">
+                    <div class="card white roundElement">
+                        <div class="card-content black-text">
+                            <span class="card-title">Tên đề tài:</span>
+                            <br>
+                            <center>
+                                <span class="card-title">
+                                    <h4>Hệ thống dự báo lũ lụt</h4>
+                                </span>
+                            </center>
+
+                            <span class="card-title">Bộ môn:</span>
+                            <br>
+                            <center>
+                                <span class="card-title">Hệ Thống Thông Minh</span>
+                            </center>
+                            <span class="card-title">GVHD:</span>
+                            <br>
+                            <center>
+                                <span class="card-title">Tiến sĩ: TS</span>
+                            </center>
+                            <span class="card-title">SVTH 1:</span>
+                            <br>
+                            <center>
+                                <span class="card-title">Nguyen Van A</span>
+                                <span class="card-title">MSSV: 12345678</span>
+                            </center>
+                            <span class="card-title">SVTH 2:</span>
+                            <br>
+                            <center>
+                                <span class="card-title">Nguyen Van B</span>
+                                <span class="card-title">MSSV: 87654321</span>
+                            </center>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script type="module">
+
+        import sweetalert2 from 'https://cdn.jsdelivr.net/npm/sweetalert2@8/+esm'
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+
+        const config = {
+            apiKey: "AIzaSyC83Wt94mijrqiws1Wfx7h_jDzimXhLd4o",
+            authDomain: "sample-736cc.firebaseapp.com",
+            databaseURL: "https://sample-736cc.firebaseio.com",
+            projectId: "sample-736cc",
+            storageBucket: "sample-736cc.appspot.com",
+            messagingSenderId: "248073967542",
+            appId: "1:248073967542:web:396923d72639803c005317"
+        };
+        firebase.initializeApp(config);
+        var database = firebase.database();
+
+
+        var today = new Date();
+        var m = today.getMonth() + 1
+        if (m < 10) {
+            m = "0" + m;
+        }
+
+        var d = today.getDate()
+        if (d < 10) {
+            d = "0" + d;
+        }
+
+        var _date = d + "-" + m + "-" + today.getFullYear();
+
+        var slider_initlized_value = false;
+
+
+        var realtime_child = database.ref("/data");
+        realtime_child.on('value', function (snapshot) {
+            const data = snapshot.val();
+            const json = JSON.stringify(data)
+            const json_parse = JSON.parse(json)
+            document.getElementById("sensor_humidity_id").innerHTML = json_parse.humi + " %"
+            document.getElementById("sensor_temp_id").innerHTML = json_parse.temp + " °C"
+            document.getElementById("water_level").innerHTML = json_parse.water_level + " Cm"
+            document.getElementById("prediction_water_level_tomorrow").innerHTML = json_parse.prediction_water_level_1 + " Cm"
+            document.getElementById("prediction_water_level_after_tomorrow").innerHTML = json_parse.prediction_water_level_2 + " Cm"
+            document.getElementById("web_humidity_id").innerHTML = json_parse.weather_humi + " %"
+            document.getElementById("web_temp_id").innerHTML = json_parse.weather_temp + " °C"
+
+            if (!slider_initlized_value) {
+                slider_initlized_value = true;
+                document.getElementById("my-slider").value = json_parse.caution_level
+                document.getElementById("slider-value").innerHTML = json_parse.caution_level + " Cm"
+            }
+
+        });
+
+        // menu_sign_out
+        document.getElementById("menu_sign_out").addEventListener("click", function () {
+            // Swal alert confirm
+            Swal.fire({
+                title: 'Bạn có chắc chắn muốn đăng xuất?',
+                showDenyButton: true,
+                confirmButtonText: `Đăng xuất`,
+                denyButtonText: `Hủy`,
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+                    fetch('/sign_out', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({}),
+                    })
+                        .then(response => response.text())
+                        .then(data => {
+                            console.log('Success:', data);
+                            window.location.href = "/";
+                        })
+                        .catch((error) => {
+                            console.error('Error:', error);
+                        });
+                }
+            })
+        });
+
+
+        var slider = document.getElementById("my-slider");
+        var output = document.getElementById("slider-value");
+
+        output.innerHTML = slider.value + " Cm";
+
+        slider.oninput = function () {
+            output.innerHTML = this.value + " Cm";
+
+            // send to firebase
+            // var data = {
+            //     caution_level: this.value
+            // }
+
+            var updates = {};
+            updates['/data/caution_level'] = this.value;
+            database.ref().update(updates);
+
+
+            
+        }
+
+
+
+        async function setText(location, value) {
+            // Pause execution of this async function for 2 seconds
+            await sleep(50);
+            var e = document.querySelector(location)
+
+            if (e == null) {
+                setText(location, value)
+            } else {
+                e.innerHTML = `<span class="text">${value}</span>`;
+            }
+        }
+
+        var datepickerOptions = {
+            container: document.querySelector('#datepicker-container'),
+            onOpen: function () {
+                var location = "#datepicker-container .open .datepicker-date-display"
+                var value = this.el.value
+                setText(location, value)
+            },
+            twelveHour: false,
+            format: 'dd/mm/yyyy',
+        }
+
+
+        $(document).ready(function () {
+
+            $('select:not([multiple])').material_select();
+            var elems_datepicker = document.querySelectorAll('.datepicker');
+            var instances_datepicker = M.Datepicker.init(elems_datepicker, {
+                format: 'dd-mm-yyyy'
+            });
+
+            // $('.timepicker').timepicker();
+            var elems = document.querySelectorAll('.timepicker');
+            var instances = M.Timepicker.init(elems, {
+                twelveHour: false,
+                format: 'HH:mm:ss',
+                i18n: {
+                    clear: 'Xóa',
+                    cancel: 'Hủy',
+                    done: 'Xong',
+                    twelveHour: false,
+                    format: 'hh:mm:ss'
+                }
+            });
+
+            $('.timepicker').on('change', function () {
+                let receivedVal = $(this).val();
+                $(this).val(receivedVal + ":00");
+            });
+            document.getElementById("enviroment_id").style.display = "block";
+            document.getElementById("chart_id").style.display = "none";
+            document.getElementById("history_id").style.display = "none";
+            document.getElementById("info_id").style.display = "none";
+
+        });
+
+        var x_values_time_series = [0];
+        var y_values_humidity = [0];
+        var y_values_temperature = [0];
+        var y_values_water_level = [0];
+
+        var main_chart = new Chart("main_chart", {
+            type: "line",
+            data: {
+                labels: x_values_time_series,
+                datasets: [{
+                    label: "Humidity",
+                    data: y_values_humidity,
+                    backgroundColor: [
+                        'rgba(255, 255, 132, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                    ],
+                    borderWidth: 1
+                }, {
+                    label: "Temperature",
+                    data: y_values_temperature,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                    ],
+                    borderWidth: 1
+                }, {
+                    label: "Water Level",
+                    data: y_values_water_level,
+                    backgroundColor: [
+                        'rgba(100, 255, 132, 0.2)',
+                    ],
+                    borderColor: [
+                        'rgba(100, 255, 132, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            }
+        });
+
+        // history_table_id
+        document.getElementById("get_history_btn").addEventListener("click", function () {
+
+
+            var date = document.getElementById("datepicker_history").value;
+
+            var data = {
+                date: date
+            }
+
+            var history_child = database.ref("/history/" + date);
+
+            var table = document.getElementById("history_table_id");
+            var row = table.insertRow(0);
+            var cell1 = row.insertCell(0);
+            var cell2 = row.insertCell(1);
+            var cell3 = row.insertCell(2);
+            var cell4 = row.insertCell(3);
+
+            cell1.innerHTML = "Thời gian";
+            cell2.innerHTML = "Độ ẩm";
+            cell3.innerHTML = "Nhiệt độ";
+            cell4.innerHTML = "Mực nước";
+
+
+
+            // get one time
+            history_child.once('value', function (snapshot) {
+                const data = snapshot.val();
+                const json = JSON.stringify(data)
+                const json_parse = JSON.parse(json)
+
+                for (var key in json_parse) {
+
+                    for (var key_1 in json_parse[key]) {
+
+                        for (var key_2 in json_parse[key][key_1]) {
+                            // console.log(key_2)
+                            // for (var key_3 in json_parse[key][key_1][key_2]) {
+                            //     console.log(json_parse[key][key_1][key_2][key_3])
+                            //     var _time = key + ":" + key_1
+                            //     cell1.innerHTML = _time;
+                            //     cell2.innerHTML = json_parse[key][key_1][key_2][key_3].humi;
+                            //     cell3.innerHTML = json_parse[key][key_1][key_2][key_3].temp;
+                            //     cell4.innerHTML = json_parse[key][key_1][key_2][key_3].water_level;
+                            // }
+                            var _time = key + ":" + key_1
+
+                            var row = table.insertRow(1);
+                            var cell1 = row.insertCell(0);
+                            var cell2 = row.insertCell(1);
+                            var cell3 = row.insertCell(2);
+                            var cell4 = row.insertCell(3);
+
+                            cell1.innerHTML = _time;
+                            cell2.innerHTML = json_parse[key][key_1][key_2].humi + " %";
+                            cell3.innerHTML = json_parse[key][key_1][key_2].temp + " °C";
+                            cell4.innerHTML = json_parse[key][key_1][key_2].water_level + " Cm";
+
+
+
+                        }
+                    }
+                }
+            });
+
+        });
+
+        // get_chart_btn
+        document.getElementById("get_chart_btn").addEventListener("click", function () {
+
+            // clear all data
+
+            var _x_values_time_series = []
+            var _y_values_humidity = []
+            var _y_values_temperature = []
+            var _y_values_water_level = []
+
+
+
+            var date = document.getElementById("datepicker_chart").value;
+
+            var data = {
+                date: date
+            }
+
+            var history_child = database.ref("/history/" + date);
+
+            // get one time
+            history_child.once('value', function (snapshot) {
+                const data = snapshot.val();
+                const json = JSON.stringify(data)
+                const json_parse = JSON.parse(json)
+
+
+                // console.log(json_parse)
+                for (var key in json_parse) {
+                    // console.log(key)
+
+                    for (var key_1 in json_parse[key]) {
+                        console.log(json_parse[key][key_1])
+
+                        for (var key_2 in json_parse[key][key_1]) {
+                            console.log(json_parse[key][key_1][key_2])
+                            var _time = key + ":" + key_1
+
+
+                            _x_values_time_series.push(_time)
+                            _y_values_humidity.push(json_parse[key][key_1][key_2].humi)
+                            _y_values_temperature.push(json_parse[key][key_1][key_2].temp)
+                            _y_values_water_level.push(json_parse[key][key_1][key_2].water_level)
+
+                            main_chart.data.labels = _x_values_time_series
+                            main_chart.data.datasets[0].data = _y_values_humidity
+                            main_chart.data.datasets[1].data = _y_values_temperature
+                            main_chart.data.datasets[2].data = _y_values_water_level
+
+                            main_chart.update()
+                        }
+                    }
+                }
+            });
+        });
+
+
+
+
+
+
+        // Swal.fire('Saved!', '', 'success')
+
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- <script src="{{ url_for('static', filename='js/chartjs-plugin-zoom.js') }}"></script> -->
+</body>
+
+</html>
