@@ -1,13 +1,14 @@
-from flask import Flask, render_template, request, jsonify, make_response, redirect, session
-from firebase_admin import credentials, db
 import firebase_admin
 import bcrypt
 import re
-from dotenv import load_dotenv
 import os
-# Khởi tạo Firebase
-load_dotenv()
+from flask import Flask, render_template, request, jsonify, make_response, redirect, session
+from firebase_admin import credentials, db
+from dotenv import load_dotenv
+from flask_socketio import SocketIO, emit
 
+load_dotenv()
+# Khởi tạo Firebase
 firebase_credentials= {
   "type": "service_account",
   "project_id": "flood-flask-c14e2",
@@ -29,6 +30,7 @@ firebase_admin.initialize_app(cred, {
 
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 app.secret_key = os.getenv('SERECT_KEY')
 
 #..............................................................................................................................#
@@ -157,5 +159,35 @@ def set_caution():
     else:
         return jsonify({'message': 'Method not allowed'})
     
+#..............................................................................................................................#
+
+#Socket
+# Lắng nghe sự kiện từ Firebase Realtime Database và gửi dữ liệu tới các client kết nối
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
+    
+def send_data_to_clients():
+    data_ref = db.reference('data')
+    while True:
+        data = data_ref.get()
+        if data:
+            selected_data = {
+                'caution_level': data.get('caution_level'),
+                'humi': data.get('humi'),
+                'water_level': data.get('water_level'),
+                'temp': data.get('temp'),
+                'prediction_water_level_1': data.get('prediction_water_level_1'),
+                'prediction_water_level_2': data.get('prediction_water_level_2')
+            }
+            socketio.emit('data_update', selected_data)
+        socketio.sleep(1)
+        
 if __name__ == "__main__":
-     app.run(debug=True)
+     import threading
+     threading.Thread(target=send_data_to_clients, daemon=True).start()
+     socketio.run(app, debug=True)
