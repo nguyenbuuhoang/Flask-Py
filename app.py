@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, jsonify, make_response, redir
 from firebase_admin import credentials, db
 from dotenv import load_dotenv
 from flask_socketio import SocketIO, emit
-
+from flask_mail import Mail, Message
 load_dotenv()
 # Khởi tạo Firebase
 firebase_credentials= {
@@ -33,6 +33,14 @@ app = Flask(__name__)
 socketio = SocketIO(app)
 app.secret_key = os.getenv('SERECT_KEY')
 
+# Cấu hình Flask-Mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+
+mail = Mail(app)
 #..............................................................................................................................#
 # Eror 404 not found
 @app.errorhandler(404)
