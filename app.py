@@ -25,7 +25,7 @@ firebase_credentials= {
 
 cred = credentials.Certificate(firebase_credentials)
 firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://flood-flask-c14e2-default-rtdb.firebaseio.com/'
+    'databaseURL': os.getenv('DATABASEURL')
 })
 
 
@@ -99,7 +99,8 @@ def register():
             'username': username,
             'email': email,
             'password': hashed_password.decode('utf-8'),
-            'role': role
+            'role': role,
+            'send_email_floodwarning': False,
         })
 
         return jsonify({'message': 'Registration successful'}), 201

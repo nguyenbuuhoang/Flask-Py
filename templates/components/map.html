@@ -1,0 +1,78 @@
+<div class="map" id="map">
+    <div class="warning-box">
+        <div class="text-1">
+            Bảng cảnh báo ngập lụt
+        </div>
+        <div class="box-text">
+            <div class="box-text-1">
+                <div class="box-color-1"></div>
+                <div class="an-toan">Vùng an toàn: > <span id="safe_zone"></span> cm</div>
+            </div>
+            <div class="box-text-2">
+                <div class="box-color-2"></div>
+                <div class="nguy-co">Vùng có nguy cơ: > <span id="warning_zone"></span> cm</div>
+            </div>
+            <div class="box-text-3">
+                <div class="box-color-3"></div>
+                <div class="nguy-hiem">Vùng nguy hiểm: Nhỏ hơn <span id="danger_zone"></span> cm</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var map = L.map('map').setView([10.390902840482356, 105.42848556149704], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    var location1 = L.marker([10.390902840482356, 105.42848556149704]).addTo(map);
+    var circle1 = L.circle([10.390902840482356, 105.42848556149704], {
+        color: 'blue',
+        fillColor: '#f03',
+        fillOpacity: 0.5,
+        radius: 10000
+    }).addTo(map);
+
+    var socket = io();
+
+    socket.on('connect', () => {
+        console.log('Connected to server');
+    });
+
+    socket.on('data_update', (data) => {
+        var water_level = data.water_level;
+        var temp = data.temp;
+        var humi = data.humi;
+        var caution_level = data.caution_level;
+
+        var safe_zone = caution_level + 50;
+        var warning_zone = caution_level + 20;
+        var danger_zone = caution_level;
+
+        var content = '<div class="sensor-info">' +
+            '<b>Khu vực</b><br>' +
+            '<b><i class="fas fa-ruler"></i>Water depth:</b> <span class="distance">' + water_level + ' cm</span><br>' +
+            '<b><i class="fas fa-thermometer-half"></i>Temperature:</b> <span class="temperature">' + temp + ' °C</span><br>' +
+            '<b><i class="fas fa-tint"></i>Humidity:</b> <span class="humidity">' + humi + ' %</span>;<br>' +
+            '</div>';
+
+        location1.bindPopup(content);
+
+        var circleColor;
+        if (water_level < danger_zone) {
+            circleColor = 'red';
+        } else if (water_level < warning_zone) {
+            circleColor = 'orange';
+        } else {
+            circleColor = 'green';
+        }
+
+        circle1.setStyle({
+            color: circleColor,
+            fillColor: circleColor
+        });
+
+        document.getElementById('safe_zone').innerText = safe_zone;
+        document.getElementById('warning_zone').innerText = warning_zone;
+        document.getElementById('danger_zone').innerText = danger_zone;
+    });
+</script>
