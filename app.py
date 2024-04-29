@@ -7,6 +7,10 @@ from firebase_admin import credentials, db
 from dotenv import load_dotenv
 from flask_socketio import SocketIO, emit
 from flask_mail import Mail, Message
+import threading
+import datetime, time
+previous_data = None
+
 load_dotenv()
 # Khởi tạo Firebase
 firebase_credentials= {
@@ -42,6 +46,85 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 
 mail = Mail(app)
 #..............................................................................................................................#
+def send_email_alert(data):
+    with app.app_context():
+        users_ref = db.reference('/users')
+        users_snapshot = users_ref.get()
+
+        if users_snapshot is not None:
+            for user_key, user_data in users_snapshot.items():
+                username = user_data.get('username')
+                email = user_data.get('email')
+                
+                # Kiểm tra giá trị send_email_floodwarning của người dùng
+                send_email_floodwarning = user_data.get('send_email_floodwarning', False)
+
+                # Kiểm tra xem người dùng muốn nhận email cảnh báo không
+                if send_email_floodwarning:
+                    msg = Message('Warning', sender='your_username@example.com', recipients=[email])
+                    msg.html = render_template('email/arlet_send.html', username=username, data=data)
+
+                    try:
+                        mail.send(msg)
+                        print(f"Email sent successfully to {email}!")
+                    except Exception as e:
+                        print(f"Failed to send email to {email}: {e}")
+                else:
+                    pass
+
+            return True
+        else:
+            print("No users found in the database.")
+            return False
+#..............................................................................................................................#
+def save_data_to_history():
+    global previous_data
+
+    while True:
+        current_time = datetime.datetime.now()
+        current_date = current_time.strftime('%d-%m-%Y')
+        current_hours = current_time.strftime('%H')
+        current_minutes = current_time.strftime('%M')
+        history_path = '/history/' + current_date + '/' + current_hours + '/' + current_minutes
+
+        # Đọc dữ liệu từ Firebase và ghi vào đường dẫn lịch sử
+        ref = db.reference('/data')
+        history_ref = db.reference(history_path)
+        data_snapshot = ref.get()
+
+        if data_snapshot is not None:
+            # Lấy dữ liệu 
+            data = {
+                'temp': data_snapshot.get('temp'),
+                'humi': data_snapshot.get('humi'),
+                'weather_temp': data_snapshot.get('weather_temp'),
+                'weather_humi': data_snapshot.get('weather_humi'),
+                'water_level': data_snapshot.get('water_level'),
+                'prediction_water_level_1': round(float(data_snapshot.get('prediction_water_level_1')), 2),
+                'prediction_water_level_2': round(float(data_snapshot.get('prediction_water_level_2')), 2),
+                'caution_level': data_snapshot.get('caution_level')
+            }
+
+            if data != previous_data:
+                history_ref.push(data)
+                print("Đã lưu dữ liệu")
+
+                # Kiểm tra và gửi email cảnh báo
+                if float(data['caution_level']) > float(data['water_level']):
+                    email_result = send_email_alert(data)
+                    if email_result:
+                        print("Gửi cảnh báo thành công!")
+                    else:
+                        print("Có lỗi xảy ra!")
+                        
+                previous_data = data
+            else:
+                print("Cảm biến không được bật, không thể lưu dữ liệu")
+
+        time.sleep(15)
+
+save_data_to_history()
+#..............................................................................................................................#
 # Eror 404 not found
 @app.errorhandler(404)
 def page_not_found(error):
@@ -65,7 +148,7 @@ def about():
 # Admin page
 @app.route("/admin")
 def admin_page():
-    # Kiểm tra cookie
+    # Kiểm tra session
     role = session.get('role')
     if role == 'admin':
         return render_template('admin/dashboard.html')
@@ -73,7 +156,7 @@ def admin_page():
         return redirect("/error-403-access-denied")
 
 #..............................................................................................................................#
-
+#register
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -135,7 +218,7 @@ def login():
         if user_ref:
             hashed_password = user_ref.get('password')
             if bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
-                # Lưu vai trò vào session tùy thuộc vào vai trò của người dùng
+                # Lưu vào session
                 role = user_ref.get('role', 'user')
                 session['role'] = role
                 session['username'] = username
@@ -167,7 +250,6 @@ def set_caution():
         caution = data.get('water_level')
         print('caution:', caution)
         water_caution_level = int(caution)
-        # save to 
         return jsonify({'message': 'Set caution successful'})
     else:
         return jsonify({'message': 'Method not allowed'})
@@ -199,8 +281,8 @@ def send_data_to_clients():
             }
             socketio.emit('data_update', selected_data)
         socketio.sleep(1)
-        
+#..............................................................................................................................#
 if __name__ == "__main__":
-     import threading
-     threading.Thread(target=send_data_to_clients, daemon=True).start()
-     socketio.run(app, debug=True)
+    
+    clients_thread = threading.Thread(target=send_data_to_clients, daemon=True).start()
+    socketio.run(app, debug=True)
