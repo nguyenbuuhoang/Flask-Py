@@ -77,53 +77,47 @@ def send_email_alert(data):
             print("No users found in the database.")
             return False
 #..............................................................................................................................#
+@app.route("/send-data")
 def save_data_to_history():
-    global previous_data
+    current_time = datetime.datetime.now()
+    current_date = current_time.strftime('%d-%m-%Y')
+    current_hours = current_time.strftime('%H')
+    current_minutes = current_time.strftime('%M')
+    history_path = '/history/' + current_date + '/' + current_hours + '/' + current_minutes
+    ref = db.reference('/data')
+    history_ref = db.reference(history_path)
+    data_snapshot = ref.get()
+    last_data = db.reference('/last_data').get()
 
-    while True:
-        current_time = datetime.datetime.now()
-        current_date = current_time.strftime('%d-%m-%Y')
-        current_hours = current_time.strftime('%H')
-        current_minutes = current_time.strftime('%M')
-        history_path = '/history/' + current_date + '/' + current_hours + '/' + current_minutes
+    if data_snapshot is not None:
+        data = {
+            'temp': data_snapshot.get('temp'),
+            'humi': data_snapshot.get('humi'),
+            'weather_temp': data_snapshot.get('weather_temp'),
+            'weather_humi': data_snapshot.get('weather_humi'),
+            'water_level': data_snapshot.get('water_level'),
+            'prediction_water_level_1': round(float(data_snapshot.get('prediction_water_level_1')), 2),
+            'prediction_water_level_2': round(float(data_snapshot.get('prediction_water_level_2')), 2),
+            'caution_level': data_snapshot.get('caution_level')
+        }
 
-        # Đọc dữ liệu từ Firebase và ghi vào đường dẫn lịch sử
-        ref = db.reference('/data')
-        history_ref = db.reference(history_path)
-        data_snapshot = ref.get()
+        if last_data != data_snapshot:
+            history_ref.push(data)
+            db.reference('/last_data').update(data_snapshot)
+            response = "Cập nhật lịch sử thành công!"
 
-        if data_snapshot is not None:
-            # Lấy dữ liệu 
-            data = {
-                'temp': data_snapshot.get('temp'),
-                'humi': data_snapshot.get('humi'),
-                'weather_temp': data_snapshot.get('weather_temp'),
-                'weather_humi': data_snapshot.get('weather_humi'),
-                'water_level': data_snapshot.get('water_level'),
-                'prediction_water_level_1': round(float(data_snapshot.get('prediction_water_level_1')), 2),
-                'prediction_water_level_2': round(float(data_snapshot.get('prediction_water_level_2')), 2),
-                'caution_level': data_snapshot.get('caution_level')
-            }
+            if float(data['caution_level']) > float(data['water_level']):
+                email_result = send_email_alert(data)
+                if email_result:
+                    response += " Gửi cảnh báo thành công!"
+                else:
+                    response += " Có lỗi xảy ra khi gửi cảnh báo!"
+        else:
+            response = "Cảm biến không được bật!"
+    else:
+        response = "Không có dữ liệu snapshot!"
 
-            if data != previous_data:
-                history_ref.push(data)
-                print("Đã lưu dữ liệu")
-
-                # Kiểm tra và gửi email cảnh báo
-                if float(data['caution_level']) > float(data['water_level']):
-                    email_result = send_email_alert(data)
-                    if email_result:
-                        print("Gửi cảnh báo thành công!")
-                    else:
-                        print("Có lỗi xảy ra!")
-                        
-                previous_data = data
-            else:
-                print("Cảm biến không được bật, không thể lưu dữ liệu")
-
-        time.sleep(15)
-
-save_data_to_history()
+    return response
 #..............................................................................................................................#
 # Eror 404 not found
 @app.errorhandler(404)
