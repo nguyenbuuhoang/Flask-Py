@@ -1,0 +1,102 @@
+<div class="du-bao">
+    <div class="du-bao-text">Dự báo mực nước</div>
+    <div class="sau-1-ngay">Ngày mai: <span class="ms-2" id="prediction-water-level-1"></span></div>
+    <div class="sau-2-ngay">Ngày mốt: <span class="ms-2" id="prediction-water-level-2"></span></div>
+</div>
+<div class="box-knob">
+    <div class="row">
+        <div class="col-6 box-knob-1">
+            <div style="color: #E4080A;" class="title-knob">Nhiệt độ (°C)</div>
+            <div class="line"></div>
+            <div class="dial-knob">
+                <input id="temperature" type="text" class="dial" data-min="0" data-max="100" value="50" data-width="140"
+                    data-height="160" data-fgColor="#E4080A" data-thickness=".3" data-displayPrevious=true readonly />
+            </div>
+        </div>
+        <div class="col-6 box-knob-2">
+            <div style="color: #7DDA58;" class="title-knob">Độ ẩm (%)</div>
+            <div class="line"></div>
+            <div class="dial-knob">
+                <input id="humidity" type="text" class="dial" data-min="0" data-max="100" value="50" data-width="140"
+                    data-height="160" data-fgColor="#7DDA58" data-thickness=".3" data-displayPrevious=true readonly />
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6 box-knob-3">
+            <div style="color: #3399FF;" class="title-knob">Mực nước (cm)</div>
+            <div class="line"></div>
+            <div class="dial-knob">
+                <input id="distance" type="text" class="dial" data-min="0" data-max="200" value="50" data-width="140"
+                    data-height="160" data-fgColor="#3399FF" data-thickness=".3" data-displayPrevious=true readonly />
+            </div>
+        </div>
+        <div class="col-6 box-knob-4" id="alert-box">
+            <p id="alert-level"> </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        const socket = io();
+
+        function updateKnobs(temperature, humidity, distance) {
+            temperature = temperature.toFixed(0);
+            humidity = humidity.toFixed(0);
+            distance = distance.toFixed(2);
+            $('#temperature').val(temperature);
+            $('#humidity').val(humidity);
+            $('#distance').val(distance);
+        }
+
+        $('#region-select').on('change', function () {
+            const selectedSensor = $(this).val();
+            socket.emit('select-sensor', selectedSensor);
+            $('.box-knob').removeClass('animated');
+            setTimeout(function () {
+                $('.box-knob').addClass('animated');
+            }, 100);
+        });
+
+        socket.on('data_update', function (data) {
+            var temperature = data.temp;
+            var humidity = data.humi;
+            var distance = data.water_level;
+            const alertLevel = parseInt(data.caution_level);
+
+            var safe_zone = alertLevel + 50;
+            var warning_zone = alertLevel + 20;
+            var danger_zone = alertLevel;
+            var distance_tomorrow = data.prediction_water_level_1;
+            var distance_after_tomorrow = data.prediction_water_level_2;
+            $('#prediction-water-level-1').text(distance_tomorrow + ' cm');
+            $('#prediction-water-level-2').text(distance_after_tomorrow + ' cm');
+            updateKnobs(temperature, humidity, distance);
+            updateAlertLevel(distance, safe_zone, warning_zone, danger_zone);
+        });
+
+        function updateAlertLevel(distance, safe_zone, warning_zone, danger_zone) {
+            let alertMessage = "";
+            let alertClass = "";
+
+            if (distance < safe_zone) {
+                alertMessage = "An toàn";
+                alertClass = "alert-safe";
+            }
+            if (distance < warning_zone) {
+                alertMessage = "Có nguy cơ";
+                alertClass = "alert-warning";
+            }
+            if (distance < danger_zone) {
+                alertMessage = "Nguy hiểm";
+                alertClass = "alert-danger";
+            }
+
+            $('#alert-level').text(alertMessage);
+            $('#alert-box').removeClass().addClass("col-6 box-knob-4 " + alertClass);
+        }
+
+        $(".dial").knob();
+    });
+</script>

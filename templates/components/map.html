@@ -42,7 +42,7 @@
         var water_level = data.water_level;
         var temp = data.temp;
         var humi = data.humi;
-        var caution_level = data.caution_level;
+        const caution_level = parseInt(data.caution_level);
 
         var safe_zone = caution_level + 50;
         var warning_zone = caution_level + 20;
