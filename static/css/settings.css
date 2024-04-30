@@ -1,0 +1,77 @@
+.container {
+    width: 100%;
+    height: auto;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.box-settings {
+    border: 1px solid black;
+    width: 600px;
+    height: auto;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.text-email {
+    margin-bottom: 10px;
+}
+
+.email-change-container {
+    display: flex;
+    align-items: center;
+}
+
+.email-input {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 5px;
+    flex: 1;
+    margin-right: 10px;
+}
+
+.change-button {
+    margin-bottom: 10px;
+}
+
+button.change-button {
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button.change-button:hover {
+    background-color: #0056b3;
+}
+
+.toggle-flood-warning-btn.true {
+    margin-left: 10px;
+    color: white;
+    background-color: green;
+    border: none;
+    border-radius: 20px;
+    width: 70px;
+    height: 25px;
+}
+
+.toggle-flood-warning-btn.false {
+    margin-left: 10px;
+    color: white;
+    background-color: red;
+    border: none;
+    border-radius: 20px;
+    width: 70px;
+    height: 25px;
+}
+#error
+{
+    color: red;
+}

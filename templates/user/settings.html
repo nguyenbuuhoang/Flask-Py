@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %} Settings Page {% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+<header>
+    {% include 'components/menu.html' %}
+</header>
+<div class="container">
+    <div class="box-settings">
+        <label for="email-input" class="text-email">Email của bạn là:</label>
+        <div class="email-change-container">
+            <input id="email-input" class="email-input" type="text" value="{{ user_data.email }}" readonly>
+            <button class="change-button" id="change-email-btn">Thay đổi</button>
+        </div>
+        <div id="error"></div>
+        <span class="text-send-email">
+            Nhận cảnh báo về mail (Click vào nếu muốn thay đổi): 
+            <button class="toggle-flood-warning-btn {% if user_data.send_email_floodwarning %}true{% else %}false{% endif %}" id="toggle-flood-warning-btn">{{ "True" if user_data.send_email_floodwarning else "False" }}</button>
+        </span>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var changeEmailBtn = document.getElementById('change-email-btn');
+        var emailInput = document.getElementById('email-input');
+        var toggleFloodWarningBtn = document.getElementById('toggle-flood-warning-btn');
+
+        // Xử lý sự kiện click cho nút "Thay đổi"
+        changeEmailBtn.addEventListener('click', function() {
+            emailInput.removeAttribute('readonly');
+            changeEmailBtn.innerText = 'Lưu';
+            changeEmailBtn.removeEventListener('click', arguments.callee);
+            changeEmailBtn.addEventListener('click', function() {
+                // Gửi yêu cầu cập nhật email lên server
+                var newEmail = emailInput.value;
+                fetch('/update-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        new_email: newEmail
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Cập nhật email thành công');
+                        location.reload();
+                    } else {
+                        document.getElementById('error').innerText = data.error;
+                        console.error('Có lỗi xảy ra khi cập nhật email:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Đã xảy ra lỗi:', error);
+                });
+            });
+        });
+
+        // Xử lý sự kiện click cho nút "toggle-flood-warning-btn"
+        toggleFloodWarningBtn.addEventListener('click', function() {
+            fetch('/toggle-email-flood-warning', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Cập nhật trạng thái của nút
+                    toggleFloodWarningBtn.innerText = data.new_status ? 'True' : 'False';
+                    toggleFloodWarningBtn.classList.toggle('true');
+                    toggleFloodWarningBtn.classList.toggle('false');
+                } else {
+                    // Xử lý lỗi nếu có
+                    console.error('Có lỗi xảy ra khi thay đổi trạng thái cảnh báo:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Đã xảy ra lỗi:', error);
+            });
+        });
+    });
+</script>
+
+
+{% endblock %}

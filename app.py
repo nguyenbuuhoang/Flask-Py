@@ -61,20 +61,20 @@ def send_email_alert(data):
 
                 # Kiểm tra xem người dùng muốn nhận email cảnh báo không
                 if send_email_floodwarning:
-                    msg = Message('Warning', sender='your_username@example.com', recipients=[email])
-                    msg.html = render_template('email/arlet_send.html', username=username, data=data)
+                    msg = Message('Cảnh báo', sender='your_username@example.com', recipients=[email])
+                    msg.html = render_template('email/alert_send.html', username=username, data=data)
 
                     try:
                         mail.send(msg)
-                        print(f"Email sent successfully to {email}!")
+                        print(f"Email gửi thành công tới {email}!")
                     except Exception as e:
-                        print(f"Failed to send email to {email}: {e}")
+                        print(f"Gửi email tới {email} thất bại: {e}")
                 else:
                     pass
 
             return True
         else:
-            print("No users found in the database.")
+            print("Không tìm thấy người dùng trong cơ sở dữ liệu.")
             return False
 #..............................................................................................................................#
 @app.route("/send-data")
@@ -139,6 +139,16 @@ def home():
 def about():
     username = session.get('username')
     return render_template('user/about.html', username=username)
+@app.route("/settings")
+def settings():
+    # Lấy username từ session
+    username = session.get('username')
+    if username is None:
+        return render_template('user/login')
+    user_ref = db.reference('users')
+    user_data = user_ref.child(username).get()
+    # Truyền dữ liệu người dùng vào template
+    return render_template('user/settings.html',username=username, user_data=user_data)
 # Admin page
 @app.route("/admin")
 def admin_page():
@@ -170,7 +180,7 @@ def register():
         
         # Kiểm tra định dạng email
         if not re.match(r"[^@]+@gmail\.com", email):
-            return jsonify({'message': 'Hãy nhập đúng'}), 400
+            return jsonify({'message': 'Email không đúng định dạng'}), 400
         
         # Kiểm tra độ dài của mật khẩu
         if len(password) < 8:
@@ -188,13 +198,12 @@ def register():
             'send_email_floodwarning': False,
         })
 
-        return jsonify({'message': 'Registration successful'}), 201
+        return jsonify({'message': 'Đăng ký thành công'}), 201
     elif request.method == 'GET':
         return render_template('auth/register.html')
 
 #..............................................................................................................................#
 
-# login
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -205,7 +214,7 @@ def login():
         if username == 'admin' and password == 'admin':
             session['role'] = 'admin'
             session['username'] = username
-            return jsonify({'message': 'Admin login successful', 'role': 'admin', 'username': username})
+            return jsonify({'message': 'Đăng nhập quản trị viên thành công', 'role': 'admin', 'username': username})
 
         user_ref = db.reference('users').child(username).get()
 
@@ -216,15 +225,15 @@ def login():
                 role = user_ref.get('role', 'user')
                 session['role'] = role
                 session['username'] = username
-                return jsonify({'message': 'Login successful', 'role': role, 'username': username})
+                return jsonify({'message': 'Đăng nhập thành công', 'role': role, 'username': username})
             else:
-                return jsonify({'message': 'Incorrect password'})
+                return jsonify({'message': 'Sai mật khẩu'})
         else:
-            return jsonify({'message': 'User not found'})
+            return jsonify({'message': 'Người dùng không tồn tại'})
     elif request.method == 'GET':
         return render_template('auth/login.html')
     else:
-        return jsonify({'message': 'Method not allowed'})
+        return jsonify({'message': 'Phương thức không được phép'})
 
 #..............................................................................................................................#
 
@@ -232,10 +241,9 @@ def login():
 @app.route("/logout", methods=['POST'])
 def logout():
     session.clear()
-    return jsonify({'message': 'Sign out successful'})
+    return jsonify({'message': 'Đăng xuất thành công'})
 
 #..............................................................................................................................#
-# set_caution
 @app.route("/set_caution", methods=['POST'])
 def set_caution():
     global water_caution_level
@@ -243,11 +251,61 @@ def set_caution():
         data = request.json
         caution = data.get('water_level')
         print('caution:', caution)
+
+        # Thiết lập mức cảnh báo cho mức nước
         water_caution_level = int(caution)
-        return jsonify({'message': 'Set caution successful'})
+
+        return jsonify({'message': 'Thiết lập mức cảnh báo thành công'})
     else:
-        return jsonify({'message': 'Method not allowed'})
-    
+        return jsonify({'error': 'Phương thức không được phép'}), 405
+#..............................................................................................................................#
+@app.route("/update-email", methods=["POST"])
+def update_email():
+    username = session.get('username')
+    if not username:
+        return jsonify({'error': 'Người dùng chưa đăng nhập'}), 401
+
+    user_ref = db.reference('users').child(username)
+    user_data = user_ref.get()
+    if not user_data:
+        return jsonify({'error': 'Không tìm thấy dữ liệu người dùng'}), 404
+
+    new_email = request.json.get('new_email')
+    if not new_email:
+        return jsonify({'error': 'Chưa cung cấp email mới'}), 400
+
+    # Kiểm tra định dạng của email
+    if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', new_email):
+        return jsonify({'error': 'Email không đúng định dạng'}), 400
+
+    # Kiểm tra xem email đã tồn tại trong hệ thống hay chưa
+    existing_user = db.reference('users').order_by_child('email').equal_to(new_email).get()
+    if existing_user:
+        return jsonify({'error': 'Email đã được sử dụng bởi một tài khoản khác'}), 400
+
+    user_ref.update({'email': new_email})
+
+    return jsonify({'success': True, 'message': 'Cập nhật email thành công'}), 200
+
+#..............................................................................................................................#
+@app.route("/toggle-email-flood-warning", methods=["POST"])
+def toggle_email_flood_warning():
+    username = session.get('username')
+    if not username:
+        return jsonify({'error': 'Người dùng chưa đăng nhập'}), 401
+
+    user_ref = db.reference('users').child(username)
+    user_data = user_ref.get()
+    if not user_data:
+        return jsonify({'error': 'Không tìm thấy dữ liệu người dùng'}), 404
+
+    current_status = user_data.get('send_email_floodwarning', False)
+    new_status = not current_status
+
+    user_ref.update({'send_email_floodwarning': new_status})
+
+    return jsonify({'success': True, 'new_status': new_status}), 200
+
 #..............................................................................................................................#
 
 #Socket
