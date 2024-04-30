@@ -80,17 +80,17 @@
             let alertMessage = "";
             let alertClass = "";
 
-            if (distance < safe_zone) {
-                alertMessage = "An toàn";
-                alertClass = "alert-safe";
-            }
-            if (distance < warning_zone) {
-                alertMessage = "Có nguy cơ";
-                alertClass = "alert-warning";
-            }
             if (distance < danger_zone) {
                 alertMessage = "Nguy hiểm";
                 alertClass = "alert-danger";
+            }
+            else if (distance < warning_zone) {
+                alertMessage = "Có nguy cơ";
+                alertClass = "alert-warning";
+            }
+            else {
+                alertMessage = "An toàn";
+                alertClass = "alert-safe";
             }
 
             $('#alert-level').text(alertMessage);
