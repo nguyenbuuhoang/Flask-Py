@@ -6,11 +6,11 @@
         <div class="box-text">
             <div class="box-text-1">
                 <div class="box-color-1"></div>
-                <div class="an-toan">Vùng an toàn: > <span id="safe_zone"></span> cm</div>
+                <div class="an-toan">Vùng an toàn: trên <span id="safe_zone"></span> cm</div>
             </div>
             <div class="box-text-2">
                 <div class="box-color-2"></div>
-                <div class="nguy-co">Vùng có nguy cơ: > <span id="warning_zone"></span> cm</div>
+                <div class="nguy-co">Vùng có nguy cơ: từ <span id="warning_zone1"></span> đến <span id="warning_zone2"></span> cm</div>
             </div>
             <div class="box-text-3">
                 <div class="box-color-3"></div>
@@ -44,7 +44,6 @@
         var humi = data.humi;
         const caution_level = parseInt(data.caution_level);
 
-        var safe_zone = caution_level + 50;
         var warning_zone = caution_level + 20;
         var danger_zone = caution_level;
 
@@ -70,9 +69,9 @@
             color: circleColor,
             fillColor: circleColor
         });
-
-        document.getElementById('safe_zone').innerText = safe_zone;
-        document.getElementById('warning_zone').innerText = warning_zone;
+        document.getElementById('safe_zone').innerText = warning_zone;
+        document.getElementById('warning_zone1').innerText = warning_zone;
+        document.getElementById('warning_zone2').innerText = danger_zone;
         document.getElementById('danger_zone').innerText = danger_zone;
     });
 </script>
