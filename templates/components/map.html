@@ -57,9 +57,9 @@
         location1.bindPopup(content);
 
         var circleColor;
-        if (water_level < danger_zone) {
+        if (water_level <= danger_zone) {
             circleColor = 'red';
-        } else if (water_level < warning_zone) {
+        } else if (water_level <= warning_zone) {
             circleColor = 'orange';
         } else {
             circleColor = 'green';
@@ -70,8 +70,8 @@
             fillColor: circleColor
         });
         document.getElementById('safe_zone').innerText = warning_zone;
-        document.getElementById('warning_zone1').innerText = warning_zone;
-        document.getElementById('warning_zone2').innerText = danger_zone;
+        document.getElementById('warning_zone1').innerText = danger_zone;
+        document.getElementById('warning_zone2').innerText = warning_zone;
         document.getElementById('danger_zone').innerText = danger_zone;
     });
 </script>
