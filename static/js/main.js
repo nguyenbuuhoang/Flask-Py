@@ -31,7 +31,6 @@ function enable_div_menu(div_name) {
     // document.getElementById("control_id").style.display = "none";
     document.getElementById("history_id").style.display = "none";
     // document.getElementById("mender_update_id").style.display = "none";
-    document.getElementById("info_id").style.display = "none";
     document.getElementById(div_name).style.display = "block";
 }
 
@@ -50,8 +49,6 @@ menu.onclick = function (event) {
         enable_div_menu("history_id")
     } else if (target.id == "menu_update") {
         enable_div_menu("mender_update_id")
-    } else if (target.id == "menu_info") {
-        enable_div_menu("info_id")
     }
 }
 

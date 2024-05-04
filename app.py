@@ -10,7 +10,7 @@ from flask_mail import Mail, Message
 import threading
 import datetime, time
 previous_data = None
-
+sensor_enabled = False
 load_dotenv()
 # Khởi tạo Firebase
 firebase_credentials= {
@@ -79,6 +79,8 @@ def send_email_alert(data):
 #..............................................................................................................................#
 @app.route("/send-data")
 def save_data_to_history():
+    global sensor_enabled
+
     current_time = datetime.datetime.now()
     current_date = current_time.strftime('%d-%m-%Y')
     current_hours = current_time.strftime('%H')
@@ -104,20 +106,34 @@ def save_data_to_history():
         if last_data != data_snapshot:
             history_ref.push(data)
             db.reference('/last_data').update(data_snapshot)
-            response = "Cập nhật lịch sử thành công!"
-
+            response = {"status": "success", "message": "Cập nhật lịch sử thành công!"}
             if float(data['caution_level']) > float(data['water_level']):
                 email_result = send_email_alert(data)
                 if email_result:
-                    response += " Gửi cảnh báo thành công!"
+                    response['email_status'] = "success"
+                    response['email_message'] = "Gửi cảnh báo thành công!"
                 else:
-                    response += " Có lỗi xảy ra khi gửi cảnh báo!"
+                    response['email_status'] = "error"
+                    response['email_message'] = "Có lỗi xảy ra khi gửi cảnh báo!"
+            sensor_enabled = True
         else:
-            response = "Cảm biến không được bật!"
-    else:
-        response = "Không có dữ liệu snapshot!"
+            if sensor_enabled:
+                response = {"status": "error", "message": "Cảm biến không được bật hoặc có lỗi xảy ra!"}
+                log_path = '/log/' + current_date
+                log_ref = db.reference(log_path)
+                log_ref.push({
+                    'timestamp': current_time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'message': 'Cảm biến không được bật hoặc có lỗi xảy ra!'
+                })
+                sensor_enabled = False
+            else:
+                response = {"status": "error", "message": "Cảm biến vẫn không được bật!"}
 
-    return response
+    else:
+        response = {"status": "error", "message": "Không có dữ liệu snapshot!"}
+
+    return jsonify(response)
+
 #..............................................................................................................................#
 # Eror 404 not found
 @app.errorhandler(404)
@@ -139,6 +155,12 @@ def home():
 def about():
     username = session.get('username')
     return render_template('user/about.html', username=username)
+#Chart page
+@app.route("/charts")
+def charts():
+    username = session.get('username')
+    return render_template('user/charts.html', username=username)
+#Settings page
 @app.route("/settings")
 def settings():
     # Lấy username từ session

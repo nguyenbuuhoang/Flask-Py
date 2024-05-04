@@ -130,4 +130,13 @@
       width: 15px;
       height: 15px;
     }
+    .warning-box .box-text .box-text-1 .an-toan {
+      font-size: 12px;
+    }
+    .warning-box .box-text .box-text-2 .nguy-co {
+      font-size: 12px;
+    }
+    .warning-box .box-text .box-text-3 .nguy-hiem {
+      font-size: 12px;
+    }
   }

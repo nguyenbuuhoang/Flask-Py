@@ -2,7 +2,63 @@
 {% block title %} About Page {% endblock %}
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
 <header>
     {% include 'components/menu.html' %}
 </header>
-    {% endblock %}
+<!--   main -->
+<div class="container">
+    <div class="text-1">Hệ thống dự đoán và cảnh báo lũ sớm trên sông</div>
+    <div class="title-1">1. Giới thiệu website cảnh báo lũ</div>
+    <div class="row mo-ta">
+        <p class="desc">Đây là website cảnh báo lũ thiết kế dựa trên FLASK Framework viết giao diện theo Jinja2, người
+            dùng có thể theo dõi trực
+            tiếp theo thời gian thực, khu vực đặt cảm biến và nhận cảnh báo về mail khi có sự cố xảy ra. Để nhận cảnh
+            báo, vui lòng đăng kí
+            tài khoản, đăng nhập vào website và tùy chỉnh trong settings để bật chức năng nhận cảnh báo.</p>
+    </div>
+    <div class="title-2">2. Mô tả sơ lược về hệ thống dự đoán và cảnh báo lũ sớm</div>
+    <div class="row box">
+        <div class="col-4 box-1">
+            <p class="title">Mục đích</p>
+            <p class="desc"> Hệ thống sử dụng các cảm biến và kết nối mạng để giám sát mức nước sông và phát hiện nguy
+                cơ lũ lụt sớm. Hệ thống này nhằm cung cấp cảnh báo kịp
+                thời và chính xác cho cộng đồng và nhà quản lý, giúp họ có thể thực hiện biện pháp phòng ngừa và đáp ứng
+                nhanh chóng để bảo vệ người dân và tài sản khỏi thiệt hại do lũ lụt.</p>
+        </div>
+        <div class="col-4 box-2">
+            <p class="title">Ý tưởng</p>
+            <p class="desc">Hệ thống IoT cảnh báo lũ lụt trên sông bao gồm mở rộng mạng cảm biến, tích hợp thông tin
+                thời tiết và dự báo lũ lụt, cảnh báo công cộng, phản ứng khẩn cấp và triển khai biện pháp cứu trợ, cải
+                thiện giao diện người dùng và sử dụng công nghệ mới như trí tuệ nhân tạo và máy học.</p>
+        </div>
+        <div class="col-4 box-3">
+            <p class="title">Hướng phát triển</p>
+            <p class="desc">Phát triển thêm mobile app, tích hợp module sim để có thể gọi cảnh báo tự động cho người
+                dân. Tích hợp thêm các thuật toán phức tạp hơn để dự đoán một cách hiệu quả hơn.
+            </p>
+        </div>
+    </div>
+    <div class="text-2">Thành viên tham gia dự án</div>
+    <div class="row box-member">
+        <div class="col-12 col-sm-6 member-1 m-0 p-0">
+            <img class="member" src="{{ url_for('static', filename='image/avatar.png') }}" alt="member-a">
+            <div class="text-member">
+                <p>HỌ TÊN: NGUYỄN VĂN A</p>
+                <p>MSSV: 11111111</p>
+                <p>EMAIL: nguyenvana@gmail.com</p>
+                <p>ROLE: example</p>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 member-2 m-0 p-0">
+            <img class="member" src="{{ url_for('static', filename='image/avatar.png') }}" alt="member-a">
+            <div class="text-member">
+                <p>HỌ TÊN: NGUYỄN VĂN B</p>
+                <p>MSSV: 11111111</p>
+                <p>EMAIL: nguyenvanb@gmail.com</p>
+                <p>ROLE: example</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

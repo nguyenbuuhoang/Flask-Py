@@ -45,9 +45,9 @@
             temperature = temperature.toFixed(0);
             humidity = humidity.toFixed(0);
             distance = distance.toFixed(2);
-            $('#temperature').val(temperature);
-            $('#humidity').val(humidity);
-            $('#distance').val(distance);
+            $('#temperature').animate({ value: temperature }, { duration: 1000, easing: 'swing', step: function (now) { $(this).val(Math.ceil(now)).trigger('change'); } });
+            $('#humidity').animate({ value: humidity }, { duration: 1000, easing: 'swing', step: function (now) { $(this).val(Math.ceil(now)).trigger('change'); } });
+            $('#distance').animate({ value: distance }, { duration: 1000, easing: 'swing', step: function (now) { $(this).val(Math.ceil(now)).trigger('change'); } });
         }
 
         $('#region-select').on('change', function () {
